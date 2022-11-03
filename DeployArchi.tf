@@ -24,6 +24,15 @@ resource "azurerm_storage_account" "suez-weeu-sa-dev" {
   account_tier             = var.var_sa_tier
   account_replication_type = "LRS"
 
+  network_rules {
+    default_action = "Deny"
+    ip_rules = ["90.91.101.4"]
+    virtual_network_subnet_ids = [
+      azurerm_subnet.suez-weeu-glpi-dev-subnet-front.id,
+      azurerm_subnet.suez-weeu-glpi-dev-subnet-back.id,
+    ]
+  }
+
   tags = {
     app_environment   = var.var_tags.app_environment
     app_project_name  = var.var_tags.app_project_name
@@ -34,7 +43,7 @@ resource "azurerm_storage_account" "suez-weeu-sa-dev" {
 resource "azurerm_storage_container" "suez-weeu-sc-dev" {
   name                  = var.var_sc_name
   storage_account_name  = azurerm_storage_account.suez-weeu-sa-dev.name
-  container_access_type = "private"
+  container_access_type = "blob"
 }
 
 resource "azurerm_storage_blob" "suez-weeu-blob-dev" {
@@ -129,6 +138,7 @@ resource "azurerm_subnet" "suez-weeu-glpi-dev-subnet-front" {
   resource_group_name  = azurerm_resource_group.glpi-dev-rg.name
   virtual_network_name = azurerm_virtual_network.suez-weeu-glpi-dev-vnet.name
   address_prefixes     = ["10.0.1.0/24"]
+  service_endpoints    = ["Microsoft.Storage", "Microsoft.KeyVault"]
 }
 
 #Subnet Back
@@ -137,6 +147,7 @@ resource "azurerm_subnet" "suez-weeu-glpi-dev-subnet-back" {
   resource_group_name  = azurerm_resource_group.glpi-dev-rg.name
   virtual_network_name = azurerm_virtual_network.suez-weeu-glpi-dev-vnet.name
   address_prefixes     = ["10.0.2.0/24"]
+  service_endpoints    = ["Microsoft.Storage", "Microsoft.KeyVault"]
 }
 
 #####################################################
@@ -153,6 +164,7 @@ resource "azurerm_network_interface" "suez-weeu-ansible-dev-nic" {
     name                          = "${var.var_vm_ansible_name}-config"
     subnet_id                     = azurerm_subnet.suez-weeu-glpi-dev-subnet-back.id
     private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.suez-weeu-ansible-dev-pip.id
   }
 
   tags = {
@@ -161,6 +173,14 @@ resource "azurerm_network_interface" "suez-weeu-ansible-dev-nic" {
     app_creation_date = var.var_tags.app_creation_date
     app_name          = "ansible"
   }
+}
+
+# Public IP
+resource "azurerm_public_ip" "suez-weeu-ansible-dev-pip" {
+  name                = "${var.var_vm_ansible_name}-pip"
+  location            = var.var_location
+  resource_group_name = azurerm_resource_group.glpi-dev-rg.name
+  allocation_method   = "Dynamic"
 }
 
 # VM
@@ -197,19 +217,19 @@ resource "azurerm_linux_virtual_machine" "suez-weeu-ansible-dev-vm" {
 }
 
 #VM Extension
-# resource "azurerm_virtual_machine_extension" "suez-weeu-ansible-dev-vm-ext" {
-#   name                 = "CustomScriptExtension"
-#   virtual_machine_id   = azurerm_linux_virtual_machine.suez-weeu-ansible-dev-vm.id
-#   publisher            = "Microsoft.Azure.Extensions"
-#   type                 = "CustomScript"
-#   type_handler_version = "2.0"
+resource "azurerm_virtual_machine_extension" "suez-weeu-ansible-dev-vm-ext" {
+  name                 = "CustomScriptExtension"
+  virtual_machine_id   = azurerm_linux_virtual_machine.suez-weeu-ansible-dev-vm.id
+  publisher            = "Microsoft.Azure.Extensions"
+  type                 = "CustomScript"
+  type_handler_version = "2.0"
 
-#     settings = <<SETTINGS
-#  {
-#   "commandToExecute": var.var_vm_ansible_commands
-#  }
-# SETTINGS
-# }
+    settings = <<SETTINGS
+ {
+  "commandToExecute": "cd /tmp/ && wget https://${var.var_sa_name}.blob.core.windows.net/${var.var_sc_name}/ansible.sh && chmod +x ansible.sh && sh ansible.sh"
+ }
+SETTINGS
+}
 
 #####################################################
 ## VM GLPI
@@ -225,6 +245,7 @@ resource "azurerm_network_interface" "suez-weeu-glpi-dev-nic" {
     name                          = "${var.var_vm_glpi_name}-config"
     subnet_id                     = azurerm_subnet.suez-weeu-glpi-dev-subnet-front.id
     private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.suez-weeu-glpi-dev-pip.id
   }
 
   tags = {
@@ -233,6 +254,14 @@ resource "azurerm_network_interface" "suez-weeu-glpi-dev-nic" {
     app_creation_date = var.var_tags.app_creation_date
     app_name          = "glpi"
   }
+}
+
+# Public IP
+resource "azurerm_public_ip" "suez-weeu-glpi-dev-pip" {
+  name                = "${var.var_vm_glpi_name}-pip"
+  location            = var.var_location
+  resource_group_name = azurerm_resource_group.glpi-dev-rg.name
+  allocation_method   = "Dynamic"
 }
 
 #VM

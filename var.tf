@@ -32,10 +32,10 @@ variable "var_sc_name" {
 ## Commands
 #####################################################
 
-variable "var_vm_ansible_commands" {
-  default = "wget (URL blob) && chmod +x ansible.sh && sh ansible.sh"
+/* variable "var_vm_ansible_commands" {
+  default = "wget https://${var_sa_name}.blob.core.windows.net/${var_sc_name}/ansible.sh && chmod +x ansible.sh && sh ansible.sh"
 }
-
+ */
 
 #####################################################
 ## Tags
