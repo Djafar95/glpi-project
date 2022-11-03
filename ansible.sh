@@ -8,13 +8,13 @@ path_log='/var/log/ansible_install/install.log'
 
 #Set timezone
 echo "`date` Starting to set the timezone" >> $path_log
-timedatectl set-timezone Europe/Paris
+sudo timedatectl set-timezone Europe/Paris
 echo "`date` The set of the timezone is completed" >> $path_log
 
 
 #running apt update
 echo "`date` running apt update..." >> $path_log
-apt-get update
+sudo apt-get update
 sleep 60
 echo "`date` apt update is completed" >> $path_log
 
