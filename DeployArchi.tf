@@ -84,6 +84,23 @@ resource "azurerm_key_vault" "suez-weeu-kv-dev" {
       "Get"
     ]
   }
+
+   access_policy {
+    tenant_id = var.var_tenant_id
+    object_id = var.var_oid_dla
+
+    key_permissions = [
+      "Get"
+    ]
+
+    secret_permissions = [
+      "Get","Backup", "Delete", "List", "Purge", "Recover", "Restore", "Set"
+    ]
+
+    storage_permissions = [
+      "Get"
+    ]
+  }
 }
 
 #####################################################
@@ -216,7 +233,7 @@ resource "azurerm_linux_virtual_machine" "suez-weeu-ansible-dev-vm" {
   }
 }
 
-#VM Extension
+/* #VM Extension
 resource "azurerm_virtual_machine_extension" "suez-weeu-ansible-dev-vm-ext" {
   name                 = "CustomScriptExtension"
   virtual_machine_id   = azurerm_linux_virtual_machine.suez-weeu-ansible-dev-vm.id
@@ -229,7 +246,7 @@ resource "azurerm_virtual_machine_extension" "suez-weeu-ansible-dev-vm-ext" {
   "commandToExecute": "cd /tmp/ && wget https://${var.var_sa_name}.blob.core.windows.net/${var.var_sc_name}/ansible.sh && chmod +x ansible.sh && sh ansible.sh"
  }
 SETTINGS
-}
+} */
 
 #####################################################
 ## VM GLPI
@@ -284,5 +301,12 @@ resource "azurerm_windows_virtual_machine" "suez-weeu-glpi-dev-vm" {
     offer     = "WindowsServer"
     sku       = "2019-Datacenter"
     version   = "latest"
+  }
+
+  tags = {
+    app_environment   = var.var_tags.app_environment
+    app_project_name  = var.var_tags.app_project_name
+    app_creation_date = var.var_tags.app_creation_date
+    app_name          = "glpi"
   }
 }
