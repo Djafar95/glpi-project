@@ -132,7 +132,7 @@ resource "azurerm_key_vault_secret" "suez-weeu-ansible-vm-admin-secret" {
 }
 
 #####################################################
-## Virtual Network && Subnet 
+## Virtual Network && Subnet && NSG
 #####################################################
 
 #Vnet
@@ -166,6 +166,9 @@ resource "azurerm_subnet" "suez-weeu-glpi-dev-subnet-back" {
   address_prefixes     = ["10.0.2.0/24"]
   service_endpoints    = ["Microsoft.Storage", "Microsoft.KeyVault"]
 }
+
+#NSG
+
 
 #####################################################
 ## VM ANSIBLE
